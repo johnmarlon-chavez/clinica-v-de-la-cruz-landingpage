@@ -6,6 +6,7 @@
     <title>Panel Médico</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --primary: #1a1a2e; /* Dark Blue */
@@ -262,6 +263,65 @@
         .modal .form-label { font-size: 13px; color: var(--text-dark); margin-bottom: 5px; }
         .modal .login-input { background-color: white; border: 1px solid var(--border); padding: 10px; border-radius: 8px;}
         .modal .btn-submit { padding: 12px; margin-top: 5px; }
+
+        /* ----- FINANCE DASHBOARD STYLES ----- */
+        .finance-grid-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 24px;
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.03);
+            transition: transform 0.3s ease;
+        }
+        .stat-card:hover { transform: translateY(-5px); }
+        .stat-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .stat-info { display: flex; flex-direction: column; }
+        .stat-label { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+        .stat-value { font-size: 24px; font-weight: 700; color: var(--primary); margin: 2px 0; }
+        .stat-trend { font-size: 11px; font-weight: 600; }
+        .trend-up { color: #10b981; }
+        .trend-down { color: #ef4444; }
+
+        .finance-grid-charts {
+            display: grid;
+            grid-template-columns: 2.2fr 1fr;
+            gap: 25px;
+        }
+        @media (max-width: 1100px) {
+            .finance-grid-charts { grid-template-columns: 1fr; }
+        }
+        .chart-container-box {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 24px;
+            padding: 25px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.03);
+            min-height: 350px;
+        }
+        .chart-container-box h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
     </style>
 </head>
 <body>
@@ -312,6 +372,10 @@
                     <svg width="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                     Pacientes
                 </div>
+                <div class="menu-item" onclick="switchTab('finanzas', this)">
+                    <svg width="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    Finanzas
+                </div>
                 <div class="menu-item logout-btn" onclick="salir()">
                     <svg width="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                     Cerrar Sesión
@@ -358,6 +422,141 @@
                         </thead>
                         <tbody id="tablaPacientes">
                             <!-- Inyectado por JS de localStorage -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- PANEL FINANZAS -->
+            <div id="panel-finanzas" style="display: none; flex-direction: column; height: 100%;">
+                <div class="header-panel">
+                    <h1>Resumen Financiero</h1>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn-add" style="background: var(--primary);">
+                            <svg width="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            Exportar PDF
+                        </button>
+                    </div>
+                </div>
+
+                <!-- KPI CARDS -->
+                <div class="finance-grid-stats">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
+                            <svg width="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Ingresos Totales</span>
+                            <span class="stat-value">S/ 12,450.00</span>
+                            <span class="stat-trend trend-up">↑ 12.5% vs mes ant.</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;">
+                            <svg width="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Pacientes Atendidos</span>
+                            <span class="stat-value">48</span>
+                            <span class="stat-trend trend-up">↑ 5 nuevos</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
+                            <svg width="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Pagos Pendientes</span>
+                            <span class="stat-value">S/ 1,200.00</span>
+                            <span class="stat-trend">8 casos activos</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6;">
+                            <svg width="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path></svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Ticket Promedio</span>
+                            <span class="stat-value">S/ 259.00</span>
+                            <span class="stat-trend">Estable</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CHARTS GRID -->
+                <div class="finance-grid-charts">
+                    <div class="chart-container-box">
+                        <h3>Flujo de Ingresos (Mensual)</h3>
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                    <div class="chart-container-box">
+                        <h3>Distribución por Tratamiento</h3>
+                        <canvas id="treatmentChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- RECENT TRANSACTIONS -->
+                <div class="data-table-container" style="margin-top: 30px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="font-family: 'Playfair Display', serif; font-size: 20px;">Últimos Movimientos</h3>
+                        <button class="btn-add" style="padding: 8px 16px; font-size: 13px;">Ver todo</button>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Concepto / Paciente</th>
+                                <th>Fecha</th>
+                                <th>Monto</th>
+                                <th>Estado</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <div class="patient-info">
+                                        <div class="patient-avatar" style="background:#dcfce7; color:#166534">MR</div>
+                                        <div>
+                                            <div style="font-weight: 600;">María Rojas</div>
+                                            <div style="font-size: 11px; color: var(--text-muted);">Ortodoncia - Cuota 3</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>Hoy, 10:30 AM</td>
+                                <td style="font-weight: 600;">S/ 150.00</td>
+                                <td><span class="badge badge-success">Pagado</span></td>
+                                <td><button class="btn-icon">👁️</button></td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="patient-info">
+                                        <div class="patient-avatar" style="background:#e0f2fe; color:#075985">CP</div>
+                                        <div>
+                                            <div style="font-weight: 600;">Carlos Prado</div>
+                                            <div style="font-size: 11px; color: var(--text-muted);">Limpieza Dental</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>Ayer</td>
+                                <td style="font-weight: 600;">S/ 80.00</td>
+                                <td><span class="badge badge-success">Pagado</span></td>
+                                <td><button class="btn-icon">👁️</button></td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="patient-info">
+                                        <div class="patient-avatar" style="background:#fef3c7; color:#92400e">JV</div>
+                                        <div>
+                                            <div style="font-weight: 600;">Jorge Valdivia</div>
+                                            <div style="font-size: 11px; color: var(--text-muted);">Extracción Compleja</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>24 Abr 2026</td>
+                                <td style="font-weight: 600;">S/ 450.00</td>
+                                <td><span class="badge badge-warning">Pendiente</span></td>
+                                <td><button class="btn-icon">👁️</button></td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -530,6 +729,7 @@
             // Ocultar todos los paneles
             document.getElementById('panel-calendario').style.display = 'none';
             document.getElementById('panel-pacientes').style.display = 'none';
+            document.getElementById('panel-finanzas').style.display = 'none';
 
             // Mostrar el seleccionado
             document.getElementById('panel-' + tabId).style.display = 'flex';
@@ -538,6 +738,91 @@
             if(tabId === 'calendario' && calendarInstance) {
                 calendarInstance.render();
             }
+
+            // Inicializar Finanzas si entramos a él
+            if(tabId === 'finanzas') {
+                initFinanzas();
+            }
+        }
+
+        // --- SISTEMA DE FINANZAS (Charts) ---
+        let revenueChart = null;
+        let treatmentChart = null;
+
+        function initFinanzas() {
+            // Destruir instancias previas si existen para evitar solapamientos
+            if(revenueChart) revenueChart.destroy();
+            if(treatmentChart) treatmentChart.destroy();
+
+            // Gráfico de Ingresos Mensuales
+            const ctxRev = document.getElementById('revenueChart').getContext('2d');
+            revenueChart = new Chart(ctxRev, {
+                type: 'line',
+                data: {
+                    labels: ['Nov', 'Dic', 'Ene', 'Feb', 'Mar', 'Abr'],
+                    datasets: [{
+                        label: 'Ingresos Mensuales (S/)',
+                        data: [8200, 9500, 7800, 11000, 10500, 12450],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: '#10b981',
+                        pointBorderWidth: 2,
+                        pointRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true,
+                            grid: { color: 'rgba(0,0,0,0.05)', drawBorder: false },
+                            ticks: { font: { size: 11 } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 11 } }
+                        }
+                    }
+                }
+            });
+
+            // Gráfico de Tratamientos
+            const ctxTreat = document.getElementById('treatmentChart').getContext('2d');
+            treatmentChart = new Chart(ctxTreat, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Ortodoncia', 'Limpieza', 'Resinas', 'Otros'],
+                    datasets: [{
+                        data: [45, 25, 20, 10],
+                        backgroundColor: ['#8b5cf6', '#10b981', '#3b82f6', '#f59e0b'],
+                        borderWidth: 0,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20,
+                                font: { size: 12 }
+                            }
+                        }
+                    }
+                }
+            });
         }
 
         function initCalendario() {
