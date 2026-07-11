@@ -664,7 +664,11 @@
         <aside class="sidebar">
             <h2>Panel<span>.</span></h2>
             <nav>
-                <div class="menu-item active" onclick="switchTab('calendario', this)">
+                <div class="menu-item active" onclick="switchTab('resumen', this)">
+                    <svg width="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                    Resumen
+                </div>
+                <div class="menu-item" onclick="switchTab('calendario', this)">
                     <svg width="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                     Calendario
                 </div>
@@ -684,9 +688,67 @@
         </aside>
 
         <main class="main-panel">
-            
+
+            <!-- PANEL RESUMEN -->
+            <div id="panel-resumen" style="display: flex; flex-direction: column; height: 100%;">
+                <div class="header-panel finance-header">
+                    <div>
+                        <h1>Resumen</h1>
+                        <p id="resumenFecha" style="color: var(--text-muted); margin-top: 6px; font-size: 15px;"></p>
+                    </div>
+                    <div style="display: flex; gap: 12px;">
+                        <button class="btn-add" style="background: #059669;" onclick="abrirModalPaciente()">
+                            <svg width="18" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+                            Registrar Paciente
+                        </button>
+                        <button class="btn-add" onclick="abrirModal()">
+                            <svg width="18" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+                            Nueva Cita
+                        </button>
+                    </div>
+                </div>
+
+                <div class="finance-metrics" id="resumenMetrics">
+                    <div class="metric-card">
+                        <div class="metric-icon">📅</div>
+                        <div class="metric-label">Citas de Hoy</div>
+                        <div class="metric-value" id="resumenCitasHoy">0</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">💰</div>
+                        <div class="metric-label">Ingresos del Mes</div>
+                        <div class="metric-value positive" id="resumenIngresosMes">S/&nbsp;0.00</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">🦷</div>
+                        <div class="metric-label">Pacientes Activos</div>
+                        <div class="metric-value" id="resumenPacientesActivos">0</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">⚖️</div>
+                        <div class="metric-label">Balance del Mes</div>
+                        <div class="metric-value" id="resumenBalanceMes">S/&nbsp;0.00</div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px; flex: 1; min-height: 340px;">
+                    <div class="glass-card" style="display: flex; flex-direction: column;">
+                        <h3 style="font-size: 16px; color: var(--primary); margin-bottom: 16px;">Ingresos vs Gastos — Últimos 6 Meses</h3>
+                        <div style="position: relative; flex: 1; min-height: 260px;">
+                            <canvas id="chartResumen"></canvas>
+                        </div>
+                    </div>
+                    <div class="glass-card" style="display: flex; flex-direction: column; overflow: hidden;">
+                        <h3 style="font-size: 16px; color: var(--primary); margin-bottom: 16px;">Próximas Citas</h3>
+                        <ul class="history-list" id="resumenProximasCitas" style="overflow-y: auto; flex: 1;">
+                            <li class="history-item"><span style="font-size: 14px; color: var(--text-muted);">Sin citas próximas</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
             <!-- PANEL CALENDARIO -->
-            <div id="panel-calendario" style="display: flex; flex-direction: column; height: 100%;">
+            <div id="panel-calendario" style="display: none; flex-direction: column; height: 100%;">
                 <div class="header-panel">
                     <div>
                         <h1>Agenda de Citas</h1>

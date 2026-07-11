@@ -15,6 +15,7 @@ import {
 
 let calendarInstance = null;
 let citaSeleccionada = null; // Guardar la cita temporalmente
+let resumenChart = null;
 
 // Colecciones de Firestore del doctor autenticado (se asignan al iniciar sesión)
 let citasCollection = null;
@@ -126,6 +127,7 @@ async function cargarDatos(uid) {
     initCalendario();
     renderPacientes();
     renderFinanzasPacientes();
+    renderResumen();
 }
 
 // --- SISTEMA DE PESTAÑAS (SPA) ---
@@ -134,12 +136,14 @@ function switchTab(tabId, el) {
     items.forEach(item => item.classList.remove('active'));
     el.classList.add('active');
 
+    document.getElementById('panel-resumen').style.display = 'none';
     document.getElementById('panel-calendario').style.display = 'none';
     document.getElementById('panel-pacientes').style.display = 'none';
     document.getElementById('panel-finanzas').style.display = 'none';
 
     document.getElementById('panel-' + tabId).style.display = 'flex';
 
+    if (tabId === 'resumen') renderResumen();
     if (tabId === 'calendario' && calendarInstance) calendarInstance.render();
     if (tabId === 'finanzas') setTimeout(initFinanzas, 100);
 
@@ -218,6 +222,127 @@ function actualizarResumenCitas() {
         labelEst.textContent = esHoy ? "Estado de Consultorio" : "Vista de Agenda";
         if (!esHoy) dot.style.background = "#cbd5e1";
     }
+}
+
+// --- SISTEMA DE RESUMEN (DASHBOARD) ---
+function mesActualStr(fecha = new Date()) {
+    return fecha.getFullYear() + '-' + String(fecha.getMonth() + 1).padStart(2, '0');
+}
+
+function renderResumen() {
+    const hoy = new Date();
+    const hoyStr = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0') + '-' + String(hoy.getDate()).padStart(2, '0');
+    const mesActual = mesActualStr(hoy);
+
+    const fechaEl = document.getElementById('resumenFecha');
+    if (fechaEl) {
+        const texto = hoy.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        fechaEl.textContent = texto.charAt(0).toUpperCase() + texto.slice(1);
+    }
+
+    // Citas de hoy y próximas citas (a partir del calendario ya cargado)
+    const eventos = calendarInstance ? calendarInstance.getEvents() : [];
+    const fechaLocalStr = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    const citasHoy = eventos.filter(e => e.start && fechaLocalStr(e.start) === hoyStr);
+    document.getElementById('resumenCitasHoy').textContent = citasHoy.length;
+
+    const proximas = eventos
+        .filter(e => e.start && e.start >= hoy)
+        .sort((a, b) => a.start - b.start)
+        .slice(0, 5);
+
+    const listaProximas = document.getElementById('resumenProximasCitas');
+    if (proximas.length === 0) {
+        listaProximas.innerHTML = '<li class="history-item"><span style="font-size: 14px; color: var(--text-muted);">Sin citas próximas</span></li>';
+    } else {
+        listaProximas.innerHTML = proximas.map(e => {
+            const partes = e.title.split('|');
+            const tratamiento = partes[0] || '';
+            const nombre = partes[1] || tratamiento;
+            const fechaHora = e.start.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) + ' · ' + e.start.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+            return `<li class="history-item">
+                <div style="display:flex; flex-direction:column;">
+                    <span style="font-size:14px; font-weight:500;">${nombre}</span>
+                    <span class="history-date">${tratamiento}</span>
+                </div>
+                <span class="history-amount">${fechaHora}</span>
+            </li>`;
+        }).join('');
+    }
+
+    // Ingresos / Gastos / Balance del mes actual
+    const registrosMes = finanzasPacientesStore.filter(f => f.fecha && f.fecha.startsWith(mesActual));
+    const ingresosMes = registrosMes.filter(f => (f.tipo || 'ingreso') === 'ingreso').reduce((sum, f) => sum + (f.pago || 0), 0);
+    const gastosMes = registrosMes.filter(f => f.tipo === 'gasto').reduce((sum, f) => sum + (f.precio || 0), 0);
+    const balanceMes = ingresosMes - gastosMes;
+
+    document.getElementById('resumenIngresosMes').innerHTML = formatSoles(ingresosMes);
+    document.getElementById('resumenBalanceMes').innerHTML = formatSoles(balanceMes);
+    document.getElementById('resumenBalanceMes').className = 'metric-value' + (balanceMes >= 0 ? ' positive' : ' negative');
+
+    // Pacientes activos
+    document.getElementById('resumenPacientesActivos').textContent = pacientesStore.filter(p => p.estado === 'Activo').length;
+
+    renderChartResumen();
+}
+
+function renderChartResumen() {
+    const canvas = document.getElementById('chartResumen');
+    if (!canvas || typeof Chart === 'undefined') return;
+
+    // Últimos 6 meses (incluyendo el actual)
+    const meses = [];
+    const base = new Date();
+    for (let i = 5; i >= 0; i--) {
+        const d = new Date(base.getFullYear(), base.getMonth() - i, 1);
+        meses.push({ key: mesActualStr(d), label: d.toLocaleDateString('es-ES', { month: 'short' }) });
+    }
+
+    const ingresosPorMes = meses.map(m =>
+        finanzasPacientesStore
+            .filter(f => (f.tipo || 'ingreso') === 'ingreso' && f.fecha && f.fecha.startsWith(m.key))
+            .reduce((sum, f) => sum + (f.pago || 0), 0)
+    );
+    const gastosPorMes = meses.map(m =>
+        finanzasPacientesStore
+            .filter(f => f.tipo === 'gasto' && f.fecha && f.fecha.startsWith(m.key))
+            .reduce((sum, f) => sum + (f.precio || 0), 0)
+    );
+
+    if (resumenChart) {
+        resumenChart.destroy();
+    }
+
+    resumenChart = new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels: meses.map(m => m.label.charAt(0).toUpperCase() + m.label.slice(1)),
+            datasets: [
+                {
+                    label: 'Ingresos',
+                    data: ingresosPorMes,
+                    backgroundColor: '#10b981',
+                    borderRadius: 6
+                },
+                {
+                    label: 'Gastos',
+                    data: gastosPorMes,
+                    backgroundColor: '#ef4444',
+                    borderRadius: 6
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8 } }
+            },
+            scales: {
+                y: { beginAtZero: true, ticks: { callback: (value) => 'S/ ' + value } }
+            }
+        }
+    });
 }
 
 // --- SISTEMA DE FINANZAS ELITE ---
