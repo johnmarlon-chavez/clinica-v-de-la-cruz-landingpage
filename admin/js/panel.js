@@ -269,6 +269,17 @@ function switchTab(tabId, el) {
     if (tabId === 'resumen') renderResumen();
     if (tabId === 'calendario' && calendarInstance) calendarInstance.render();
     if (tabId === 'finanzas') setTimeout(initFinanzas, 100);
+
+    toggleMobileSidebar(false); // al navegar, cierra el menú si está en modo celular/tablet
+}
+
+function toggleMobileSidebar(forzar) {
+    const sidebar = document.getElementById('sidebarMenu');
+    const overlay = document.getElementById('sidebarOverlay');
+    const abrir = typeof forzar === 'boolean' ? forzar : !sidebar.classList.contains('mobile-open');
+
+    sidebar.classList.toggle('mobile-open', abrir);
+    overlay.classList.toggle('active', abrir);
 }
 
 // --- SISTEMA DE RESUMEN (DASHBOARD) ---
@@ -1318,6 +1329,7 @@ document.addEventListener('keydown', function (e) {
 // ----- Exponer al scope global las funciones invocadas por atributos onclick/oninput/onchange del HTML -----
 window.togglePass = togglePass;
 window.switchTab = switchTab;
+window.toggleMobileSidebar = toggleMobileSidebar;
 window.salir = salir;
 window.abrirModal = abrirModal;
 window.abrirModalPaciente = abrirModalPaciente;
