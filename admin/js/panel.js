@@ -2,7 +2,9 @@ import { auth, db } from './firebase-config.js';
 import {
     signInWithEmailAndPassword,
     onAuthStateChanged,
-    signOut
+    signOut,
+    setPersistence,
+    browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import {
     collection,
@@ -15,12 +17,101 @@ import {
 
 let calendarInstance = null;
 let citaSeleccionada = null; // Guardar la cita temporalmente
+let editandoCitaId = null; // Si tiene valor, formCita actualiza esa cita en vez de crear una nueva
 let resumenChart = null;
 
 // Colecciones de Firestore del doctor autenticado (se asignan al iniciar sesión)
 let citasCollection = null;
 let pacientesCollection = null;
 let finanzasCollection = null;
+
+// Fecha en formato YYYY-MM-DD usando el huso horario local (evita el corrimiento
+// de día que causa toISOString(), que convierte a UTC).
+function fechaLocalISO(d = new Date()) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+// ----- SELECT PERSONALIZADO -----
+// Envuelve cada <select> real (oculto pero funcional) con un trigger + panel
+// propios, para que el menú desplegado se vea igual que el resto del panel
+// en vez del estilo nativo del navegador. El <select> real sigue siendo la
+// fuente de verdad: todo el código que lee/asigna su .value sigue funcionando.
+const SELECTS_PERSONALIZADOS = ['citaTratamiento', 'citaHora', 'finTipo', 'finCitaOrigen', 'finTratamiento', 'pacTratamiento', 'pacEstado', 'pacPacienteOrigen'];
+
+function construirSelectPersonalizado(id) {
+    const select = document.getElementById(id);
+    if (!select) return;
+
+    select.style.display = 'none';
+
+    const trigger = document.createElement('div');
+    trigger.className = 'login-input custom-select-trigger';
+    trigger.id = 'trigger-' + id;
+    trigger.innerHTML = '<span class="csel-label"></span><svg class="csel-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path></svg>';
+
+    const panel = document.createElement('div');
+    panel.className = 'custom-select-panel';
+    panel.id = 'panel-' + id;
+    trigger.appendChild(panel);
+
+    select.insertAdjacentElement('afterend', trigger);
+
+    trigger.addEventListener('click', function (e) {
+        e.stopPropagation();
+        togglePanelPersonalizado(id);
+    });
+
+    sincronizarTriggerSelect(id);
+}
+
+function sincronizarTriggerSelect(id) {
+    const select = document.getElementById(id);
+    const trigger = document.getElementById('trigger-' + id);
+    const panel = document.getElementById('panel-' + id);
+    if (!select || !trigger || !panel) return;
+
+    panel.innerHTML = '';
+    Array.from(select.options).forEach(opt => {
+        const item = document.createElement('div');
+        item.className = 'custom-select-option' + (opt.disabled ? ' disabled' : '') + (opt.value === select.value ? ' selected' : '');
+        item.textContent = opt.textContent;
+        if (!opt.disabled) {
+            item.addEventListener('click', function (e) {
+                e.stopPropagation();
+                select.value = opt.value;
+                select.dispatchEvent(new Event('change', { bubbles: true }));
+                sincronizarTriggerSelect(id);
+                cerrarTodosLosPaneles();
+            });
+        }
+        panel.appendChild(item);
+    });
+
+    const seleccionada = select.options[select.selectedIndex];
+    trigger.querySelector('.csel-label').textContent = seleccionada ? seleccionada.textContent : '';
+    trigger.classList.toggle('placeholder', !!(seleccionada && seleccionada.disabled));
+}
+
+function togglePanelPersonalizado(id) {
+    const trigger = document.getElementById('trigger-' + id);
+    const panel = document.getElementById('panel-' + id);
+    if (!trigger || !panel) return;
+    const yaAbierto = panel.classList.contains('open');
+    cerrarTodosLosPaneles();
+    if (!yaAbierto) {
+        panel.classList.add('open');
+        trigger.classList.add('open');
+    }
+}
+
+function cerrarTodosLosPaneles() {
+    document.querySelectorAll('.custom-select-panel.open').forEach(p => p.classList.remove('open'));
+    document.querySelectorAll('.custom-select-trigger.open').forEach(t => t.classList.remove('open'));
+}
+
+document.addEventListener('click', cerrarTodosLosPaneles);
+
+SELECTS_PERSONALIZADOS.forEach(construirSelectPersonalizado);
 
 // Mapa global de colores por tratamiento para consistencia en toda la app
 const colorPorTratamiento = {
@@ -48,8 +139,33 @@ function eliminarCita() {
     deleteDoc(doc(citasCollection, id)).then(function () {
         citaSeleccionada.remove();
         cerrarModalVer();
-        actualizarResumenCitas();
     });
+}
+
+function editarCita() {
+    if (!citaSeleccionada) return;
+
+    const partes = citaSeleccionada.title.split('|');
+    const tratamiento = partes[0] || '';
+    const nombre = partes[1] || '';
+    const d = citaSeleccionada.start;
+    const fechaStr = fechaLocalISO(d);
+    const horaStr = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+
+    document.getElementById('citaNombre').value = nombre;
+    document.getElementById('citaTratamiento').value = tratamiento;
+    document.getElementById('citaFecha').min = fechaLocalISO();
+    document.getElementById('citaFecha').value = fechaStr;
+    document.getElementById('citaHora').value = horaStr;
+    sincronizarTriggerSelect('citaTratamiento');
+    sincronizarTriggerSelect('citaHora');
+
+    editandoCitaId = citaSeleccionada.id;
+    document.querySelector('#modalCita h3').textContent = 'Editar Cita';
+    document.querySelector('#formCita .btn-submit').textContent = 'Actualizar Cita';
+
+    document.getElementById('modalVerCita').style.display = 'none';
+    document.getElementById('modalCita').style.display = 'flex';
 }
 
 // ----- AUTENTICACIÓN -----
@@ -59,7 +175,10 @@ document.getElementById('loginForm').addEventListener('submit', function (e) {
     const p = document.getElementById('passVal').value;
     const err = document.getElementById('errorMsg');
 
-    signInWithEmailAndPassword(auth, u, p)
+    setPersistence(auth, browserLocalPersistence)
+        .then(function () {
+            return signInWithEmailAndPassword(auth, u, p);
+        })
         .then(function () {
             err.style.opacity = '0';
         })
@@ -101,6 +220,10 @@ let pacientesStore = [];
 let editIndexPaciente = -1;
 let finanzasPacientesStore = [];
 let editIndexFinanza = -1;
+let abonoIdx = -1;
+let drawerPacienteIdx = -1;
+let citasParaAutocompletar = [];
+let origenesParaAutocompletarPaciente = [];
 let currentSort = { key: null, direction: 'asc' };
 let eventosIniciales = [];
 
@@ -146,82 +269,6 @@ function switchTab(tabId, el) {
     if (tabId === 'resumen') renderResumen();
     if (tabId === 'calendario' && calendarInstance) calendarInstance.render();
     if (tabId === 'finanzas') setTimeout(initFinanzas, 100);
-
-    actualizarResumenCitas();
-}
-
-function actualizarResumenCitas() {
-    if (!calendarInstance) return;
-    const eventos = calendarInstance.getEvents();
-    const ahoraReal = new Date();
-
-    // Obtener la fecha que el usuario está viendo actualmente en el calendario
-    const vistaFecha = calendarInstance.getDate();
-
-    const vistaStr = vistaFecha.getFullYear() + '-' +
-        String(vistaFecha.getMonth() + 1).padStart(2, '0') + '-' +
-        String(vistaFecha.getDate()).padStart(2, '0');
-
-    const hoyRealStr = ahoraReal.getFullYear() + '-' +
-        String(ahoraReal.getMonth() + 1).padStart(2, '0') + '-' +
-        String(ahoraReal.getDate()).padStart(2, '0');
-
-    const esHoy = vistaStr === hoyRealStr;
-
-    // 1. Citas del día seleccionado o visto en la navegación
-    const citasDelDia = eventos.filter(e => {
-        const start = e.start;
-        if (!start) return false;
-        const eFecha = start.getFullYear() + '-' +
-            String(start.getMonth() + 1).padStart(2, '0') + '-' +
-            String(start.getDate()).padStart(2, '0');
-        return eFecha === vistaStr;
-    });
-
-    // Actualizar etiqueta: si es hoy "Hoy", si no, mostramos la fecha del calendario
-    const labelCitas = document.querySelector('#panel-calendario .metric-card:nth-child(1) span');
-    labelCitas.textContent = esHoy ? "Citas de Hoy" : "Citas del " + vistaFecha.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
-
-    document.getElementById('statCitasHoy').textContent = citasDelDia.length;
-
-    // 2. Próximo Paciente (si es hoy) o Primer Paciente (si es otro día futuro/pasado)
-    const labelProx = document.querySelector('#panel-calendario .metric-card:nth-child(2) span');
-    let proximas;
-
-    if (esHoy) {
-        labelProx.textContent = "Próximo Paciente";
-        proximas = citasDelDia.filter(e => e.start > ahoraReal).sort((a, b) => a.start - b.start);
-    } else {
-        labelProx.textContent = "Primer Paciente del Día";
-        proximas = [...citasDelDia].sort((a, b) => a.start - b.start);
-    }
-
-    const statNext = document.getElementById('statProximoPac');
-    if (proximas.length > 0) {
-        let partes = proximas[0].title.split('|');
-        let nombre = partes[1] || partes[0];
-        let hora = proximas[0].start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        statNext.innerHTML = `<span style="color:var(--primary)">${nombre}</span> <span style="font-size:12px; color:var(--text-muted); font-weight:400;">— ${hora}</span>`;
-    } else {
-        statNext.textContent = esHoy ? "Sin citas pendientes" : "Sin citas este día";
-    }
-
-    // 3. Estado de Consultorio (Solo relevante para el tiempo real de Hoy)
-    const enCita = esHoy && citasDelDia.some(e => ahoraReal >= e.start && ahoraReal <= e.end);
-    const dot = document.getElementById('dotEstado');
-    const txt = document.getElementById('txtEstado');
-    const labelEst = document.querySelector('#panel-calendario .metric-card:nth-child(3) span');
-
-    if (enCita) {
-        dot.style.background = "#ef4444"; // Rojo
-        txt.textContent = "En Consulta";
-        labelEst.textContent = "Estado de Consultorio";
-    } else {
-        dot.style.background = "var(--secondary)"; // Verde
-        txt.textContent = esHoy ? "Disponible" : "N/A (Otro día)";
-        labelEst.textContent = esHoy ? "Estado de Consultorio" : "Vista de Agenda";
-        if (!esHoy) dot.style.background = "#cbd5e1";
-    }
 }
 
 // --- SISTEMA DE RESUMEN (DASHBOARD) ---
@@ -231,7 +278,7 @@ function mesActualStr(fecha = new Date()) {
 
 function renderResumen() {
     const hoy = new Date();
-    const hoyStr = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0') + '-' + String(hoy.getDate()).padStart(2, '0');
+    const hoyStr = fechaLocalISO(hoy);
     const mesActual = mesActualStr(hoy);
 
     const fechaEl = document.getElementById('resumenFecha');
@@ -242,9 +289,16 @@ function renderResumen() {
 
     // Citas de hoy y próximas citas (a partir del calendario ya cargado)
     const eventos = calendarInstance ? calendarInstance.getEvents() : [];
-    const fechaLocalStr = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-    const citasHoy = eventos.filter(e => e.start && fechaLocalStr(e.start) === hoyStr);
+    const citasHoy = eventos.filter(e => e.start && fechaLocalISO(e.start) === hoyStr);
     document.getElementById('resumenCitasHoy').textContent = citasHoy.length;
+
+    // Citas de la semana actual (lunes a domingo)
+    const diaSemana = hoy.getDay(); // 0=domingo ... 6=sábado
+    const offsetLunes = diaSemana === 0 ? -6 : 1 - diaSemana;
+    const lunes = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + offsetLunes);
+    const domingo = new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + 6, 23, 59, 59);
+    const citasSemana = eventos.filter(e => e.start && e.start >= lunes && e.start <= domingo);
+    document.getElementById('resumenCitasSemana').textContent = citasSemana.length;
 
     const proximas = eventos
         .filter(e => e.start && e.start >= hoy)
@@ -276,12 +330,8 @@ function renderResumen() {
     const gastosMes = registrosMes.filter(f => f.tipo === 'gasto').reduce((sum, f) => sum + (f.precio || 0), 0);
     const balanceMes = ingresosMes - gastosMes;
 
-    document.getElementById('resumenIngresosMes').innerHTML = formatSoles(ingresosMes);
     document.getElementById('resumenBalanceMes').innerHTML = formatSoles(balanceMes);
     document.getElementById('resumenBalanceMes').className = 'metric-value' + (balanceMes >= 0 ? ' positive' : ' negative');
-
-    // Pacientes activos
-    document.getElementById('resumenPacientesActivos').textContent = pacientesStore.filter(p => p.estado === 'Activo').length;
 
     renderChartResumen();
 }
@@ -366,12 +416,34 @@ function actualizarMetricasFinanzas(dataToCalculate = finanzasPacientesStore) {
     metricIngresosEl.className = 'metric-value positive';
     metricGastosEl.className = 'metric-value' + (gastosTotal > 0 ? ' warning' : '');
     metricBalanceEl.className = 'metric-value' + (balanceTotal >= 0 ? ' positive' : ' negative');
+
+    const searchTerm = document.getElementById('searchFinanza')?.value || '';
+    const selectedMonth = document.getElementById('filterMonth')?.value || '';
+    let subtitulo = 'Todo el historial';
+    if (selectedMonth) {
+        const [y, m] = selectedMonth.split('-');
+        const nombreMes = new Date(Number(y), Number(m) - 1, 1).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+        subtitulo = 'Filtro: ' + nombreMes;
+    } else if (searchTerm) {
+        subtitulo = 'Filtro: búsqueda activa';
+    }
+    document.getElementById('metricIngresosSub').textContent = subtitulo;
+    document.getElementById('metricGastosSub').textContent = subtitulo;
+    document.getElementById('metricBalanceSub').textContent = subtitulo;
+
+    // Deuda total: siempre sobre TODO el historial, no se ve afectada por el filtro/búsqueda activa
+    const deudaTotal = finanzasPacientesStore.reduce((sum, p) => sum + (p.deuda || 0), 0);
+    document.getElementById('metricDeuda').innerHTML = formatSoles(deudaTotal);
 }
 
 // --- SISTEMA DE DIRECTORIO & FICHA ---
 function openPatientProfile(idx) {
     const p = pacientesStore[idx];
     if (!p) return;
+
+    drawerPacienteIdx = idx;
+    document.getElementById('nuevaEvolucionTexto').value = '';
+    cargarEvoluciones(p.id);
 
     document.getElementById('drawName').textContent = p.nombre;
     document.getElementById('drawStatus').textContent = 'Paciente ' + p.estado;
@@ -380,6 +452,37 @@ function openPatientProfile(idx) {
 
     let inits = p.nombre.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
     document.getElementById('drawInits').textContent = inits;
+
+    // Historial de citas real: eventos del calendario de este paciente
+    const ahora = new Date();
+    const historialCitas = calendarInstance
+        ? calendarInstance.getEvents()
+            .filter(e => {
+                const partes = e.title.split('|');
+                const nombreCita = partes[1] || partes[0];
+                return nombreCita === p.nombre;
+            })
+            .sort((a, b) => b.start - a.start)
+        : [];
+
+    let cHtml = '';
+    historialCitas.forEach(e => {
+        const partes = e.title.split('|');
+        const tratamientoCita = partes[0] || '';
+        const fechaHora = e.start.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) + ' · ' + e.start.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+        const esFutura = e.start >= ahora;
+        cHtml += `<li class="history-item">
+            <div style="display:flex; flex-direction:column;">
+                <span style="font-size:14px; font-weight:500;">${tratamientoCita}</span>
+                <span class="history-date">${fechaHora}</span>
+            </div>
+            <span class="history-amount" style="color: ${esFutura ? 'var(--dash-accent)' : 'var(--text-muted)'};">${esFutura ? 'Próxima' : 'Realizada'}</span>
+        </li>`;
+    });
+    if (historialCitas.length === 0) {
+        cHtml = '<li class="history-item"><span style="font-size:14px; color:var(--text-muted);">Sin citas registradas</span></li>';
+    }
+    document.getElementById('drawCitas').innerHTML = cHtml;
 
     // Historial financiero real: registros de Finanzas (tipo ingreso) de este paciente
     const historial = finanzasPacientesStore
@@ -411,6 +514,49 @@ function openPatientProfile(idx) {
 function closePatientProfile() {
     document.getElementById('drawerOverlay').style.display = 'none';
     document.getElementById('patient-drawer').classList.remove('active');
+    drawerPacienteIdx = -1;
+}
+
+async function cargarEvoluciones(pacienteId) {
+    const lista = document.getElementById('drawEvoluciones');
+    lista.innerHTML = '<li class="history-item"><span style="font-size:14px; color:var(--text-muted);">Cargando...</span></li>';
+
+    const evolucionesCollection = collection(doc(pacientesCollection, pacienteId), 'evoluciones');
+    const snap = await getDocs(evolucionesCollection);
+    const evoluciones = snap.docs
+        .map(d => Object.assign({ id: d.id }, d.data()))
+        .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+    if (evoluciones.length === 0) {
+        lista.innerHTML = '<li class="history-item"><span style="font-size:14px; color:var(--text-muted);">Sin notas de evolución todavía</span></li>';
+        return;
+    }
+
+    lista.innerHTML = evoluciones.map(ev => `<li class="history-item" style="align-items: flex-start;">
+        <div style="display:flex; flex-direction:column; gap: 4px;">
+            <span style="font-size:14px; font-weight:500; white-space: pre-wrap;">${ev.texto}</span>
+            <span class="history-date">${ev.fecha}</span>
+        </div>
+    </li>`).join('');
+}
+
+async function guardarNotaEvolucion() {
+    if (drawerPacienteIdx === -1) return;
+    const paciente = pacientesStore[drawerPacienteIdx];
+    if (!paciente) return;
+
+    const textarea = document.getElementById('nuevaEvolucionTexto');
+    const texto = textarea.value.trim();
+    if (!texto) {
+        alert('Escribe una nota antes de guardar.');
+        return;
+    }
+
+    const evolucionesCollection = collection(doc(pacientesCollection, paciente.id), 'evoluciones');
+    await addDoc(evolucionesCollection, { texto, fecha: fechaLocalISO() });
+
+    textarea.value = '';
+    cargarEvoluciones(paciente.id);
 }
 
 function initCalendario() {
@@ -422,7 +568,7 @@ function initCalendario() {
     const calEl = document.getElementById('calendar');
     calendarInstance = new FullCalendar.Calendar(calEl, {
         locale: 'es',
-        initialView: 'timeGridWeek',
+        initialView: 'timeGridDay',
         dayMaxEvents: 3, // Limita eventos por día en vista mes
         headerToolbar: {
             left: 'prev,next today',
@@ -434,9 +580,6 @@ function initCalendario() {
             month: 'Mes',
             week: 'Semana',
             day: 'Día'
-        },
-        datesSet: function () {
-            actualizarResumenCitas();
         },
         height: '100%',
         stickyHeaderDates: true,
@@ -510,22 +653,28 @@ function initCalendario() {
         }
     });
     calendarInstance.render();
-    actualizarResumenCitas();
 }
 
 function abrirModal(fecha = null, hora = null) {
-    const hoy = new Date();
-    const dateStr = hoy.toISOString().split('T')[0];
+    const dateStr = fechaLocalISO();
     const f = document.getElementById('citaFecha');
     const h = document.getElementById('citaHora');
     const pacienteInput = document.getElementById('citaNombre');
     const tratamientoInput = document.getElementById('citaTratamiento');
     const modal = document.getElementById('modalCita');
 
+    editandoCitaId = null;
+    document.querySelector('#modalCita h3').textContent = 'Agregar Cita';
+    document.querySelector('#formCita .btn-submit').textContent = 'Guardar Cita';
+
+    f.min = dateStr;
     f.value = fecha || f.value || dateStr;
     h.value = hora || h.value || '09:00';
     pacienteInput.value = '';
     tratamientoInput.value = '';
+
+    sincronizarTriggerSelect('citaTratamiento');
+    sincronizarTriggerSelect('citaHora');
 
     modal.style.display = 'flex';
 }
@@ -534,6 +683,9 @@ function cerrarModal() {
     const modal = document.getElementById('modalCita');
     modal.style.display = 'none';
     document.getElementById('formCita').reset();
+    editandoCitaId = null;
+    document.querySelector('#modalCita h3').textContent = 'Agregar Cita';
+    document.querySelector('#formCita .btn-submit').textContent = 'Guardar Cita';
 }
 
 document.getElementById('formCita').addEventListener('submit', async function (e) {
@@ -548,6 +700,26 @@ document.getElementById('formCita').addEventListener('submit', async function (e
         return;
     }
 
+    const DURACION_DEFECTO_MS = 60 * 60 * 1000; // 1 hora, misma duración por defecto que usa el calendario
+    const inicioCita = new Date(`${fecha}T${hora}:00`);
+    const finCita = new Date(inicioCita.getTime() + DURACION_DEFECTO_MS);
+
+    if (inicioCita < new Date()) {
+        alert('No puedes agendar una cita en una fecha u hora que ya pasó.');
+        return;
+    }
+
+    const seCruza = calendarInstance && calendarInstance.getEvents().some(ev => {
+        if (editandoCitaId && ev.id === editandoCitaId) return false; // no comparar la cita contra sí misma
+        if (!ev.start) return false;
+        const evFin = ev.end || new Date(ev.start.getTime() + DURACION_DEFECTO_MS);
+        return inicioCita < evFin && ev.start < finCita;
+    });
+    if (seCruza) {
+        alert('Ese horario se cruza con otra cita ya agendada. Elige otra hora.');
+        return;
+    }
+
     const bg = colorPorTratamiento[tratamiento] || '#3b82f6';
     const nuevoEvento = {
         title: `${tratamiento}|${nombre}`,
@@ -556,13 +728,22 @@ document.getElementById('formCita').addEventListener('submit', async function (e
         borderColor: bg
     };
 
-    const docRef = await addDoc(citasCollection, nuevoEvento);
-
-    if (!calendarInstance) initCalendario();
-    calendarInstance.addEvent(Object.assign({ id: docRef.id }, nuevoEvento));
+    if (editandoCitaId) {
+        await updateDoc(doc(citasCollection, editandoCitaId), nuevoEvento);
+        const eventoExistente = calendarInstance.getEventById(editandoCitaId);
+        if (eventoExistente) {
+            eventoExistente.setProp('title', nuevoEvento.title);
+            eventoExistente.setProp('backgroundColor', bg);
+            eventoExistente.setProp('borderColor', bg);
+            eventoExistente.setStart(nuevoEvento.start);
+        }
+    } else {
+        const docRef = await addDoc(citasCollection, nuevoEvento);
+        if (!calendarInstance) initCalendario();
+        calendarInstance.addEvent(Object.assign({ id: docRef.id }, nuevoEvento));
+    }
 
     cerrarModal();
-    actualizarResumenCitas();
 });
 
 // ----- SISTEMA DE DIRECTORIO DE PACIENTES -----
@@ -578,8 +759,10 @@ function renderPacientes() {
     document.getElementById('pacActivos').textContent = pacientesStore.filter(p => p.estado === 'Activo').length;
     document.getElementById('pacAltas').textContent = pacientesStore.filter(p => p.estado === 'Alta').length;
 
+    let visibles = 0;
     pacientesStore.forEach((p, idx) => {
         if (searchTerm && !p.nombre.toLowerCase().includes(searchTerm)) return;
+        visibles++;
 
         let badgeClass = p.estado === 'Activo' ? 'badge-success' : (p.estado === 'Pendiente' ? 'badge-warning' : 'badge-info');
         if (p.estado === 'Alta') badgeClass = 'badge-info';
@@ -616,14 +799,96 @@ function renderPacientes() {
         `;
         tbody.appendChild(tr);
     });
+
+    if (visibles === 0) {
+        const mensaje = pacientesStore.length === 0
+            ? 'Aún no tienes pacientes registrados. Usa "Registrar Paciente" para agregar el primero.'
+            : 'Sin resultados para tu búsqueda.';
+        tbody.innerHTML = `<tr class="empty-state-row"><td colspan="6">${mensaje}</td></tr>`;
+    }
 }
 
-function abrirModalPaciente() { document.getElementById('modalPaciente').style.display = 'flex'; }
+function abrirModalPaciente() {
+    const grupoOrigen = document.getElementById('groupPacienteOrigen');
+    if (editIndexPaciente === -1) {
+        grupoOrigen.style.display = 'block';
+        poblarSelectOrigenPaciente();
+    } else {
+        grupoOrigen.style.display = 'none'; // no aplica al editar un paciente ya registrado
+    }
+    sincronizarTriggerSelect('pacTratamiento');
+    sincronizarTriggerSelect('pacEstado');
+    document.getElementById('modalPaciente').style.display = 'flex';
+}
+
+function poblarSelectOrigenPaciente() {
+    const select = document.getElementById('pacPacienteOrigen');
+    if (!select) return;
+    select.innerHTML = '<option value="">— Escribir manualmente —</option>';
+    origenesParaAutocompletarPaciente = [];
+
+    const hoy = new Date();
+    const limiteAtras = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - 30);
+    const nombresYaRegistrados = new Set(pacientesStore.map(p => p.nombre));
+    const candidatos = new Map(); // nombre -> { nombre, tratamiento, fechaOrden }
+
+    if (calendarInstance) {
+        calendarInstance.getEvents()
+            .filter(e => e.start && e.start >= limiteAtras)
+            .forEach(e => {
+                const partes = e.title.split('|');
+                const tratamiento = partes[0] || '';
+                const nombre = partes[1] || tratamiento;
+                if (nombresYaRegistrados.has(nombre)) return;
+                const existente = candidatos.get(nombre);
+                if (!existente || e.start > existente.fechaOrden) {
+                    candidatos.set(nombre, { nombre, tratamiento, fechaOrden: e.start });
+                }
+            });
+    }
+
+    finanzasPacientesStore
+        .filter(f => f.tipo !== 'gasto' && f.fecha && f.fecha >= fechaLocalISO(limiteAtras))
+        .forEach(f => {
+            if (nombresYaRegistrados.has(f.nombre)) return;
+            const fechaOrden = new Date(f.fecha);
+            const existente = candidatos.get(f.nombre);
+            if (!existente || fechaOrden > existente.fechaOrden) {
+                candidatos.set(f.nombre, { nombre: f.nombre, tratamiento: f.tratamiento, fechaOrden });
+            }
+        });
+
+    Array.from(candidatos.values())
+        .sort((a, b) => b.fechaOrden - a.fechaOrden)
+        .forEach(c => {
+            const idx = origenesParaAutocompletarPaciente.length;
+            origenesParaAutocompletarPaciente.push({ nombre: c.nombre, tratamiento: c.tratamiento });
+
+            const opt = document.createElement('option');
+            opt.value = String(idx);
+            opt.textContent = `${c.nombre} — ${c.tratamiento}`;
+            select.appendChild(opt);
+        });
+
+    sincronizarTriggerSelect('pacPacienteOrigen');
+}
+
+function autocompletarPacienteDesdeOrigen() {
+    const select = document.getElementById('pacPacienteOrigen');
+    if (select.value === '') return;
+    const origen = origenesParaAutocompletarPaciente[Number(select.value)];
+    if (!origen) return;
+
+    document.getElementById('pacNombre').value = origen.nombre;
+    document.getElementById('pacTratamiento').value = origen.tratamiento;
+    sincronizarTriggerSelect('pacTratamiento');
+}
 function cerrarModalPaciente() {
     document.getElementById('modalPaciente').style.display = 'none';
     document.getElementById('formPaciente').reset();
     editIndexPaciente = -1;
     document.querySelector('#modalPaciente h3').textContent = 'Registrar Paciente';
+    document.querySelector('#formPaciente .btn-submit').textContent = 'Guardar Paciente';
 }
 
 function editarPaciente(idx) {
@@ -635,19 +900,85 @@ function editarPaciente(idx) {
     document.getElementById('pacTratamiento').value = p.tratamiento;
     document.getElementById('pacEstado').value = p.estado;
 
-    document.querySelector('#modalPaciente h3').textContent = 'Editar Datos de Paciente';
+    document.querySelector('#modalPaciente h3').textContent = 'Editar Paciente';
+    document.querySelector('#formPaciente .btn-submit').textContent = 'Actualizar Paciente';
     abrirModalPaciente();
 }
 
-function abrirModalFinanza() { document.getElementById('modalFinanza').style.display = 'flex'; }
+function actualizarTituloFinanza() {
+    if (editIndexFinanza !== -1) return; // no pisar el título mientras se edita un registro existente
+    const isGasto = document.getElementById('finTipo').value === 'gasto';
+    document.querySelector('#modalFinanza h3').textContent = isGasto ? 'Registrar Gasto' : 'Registrar Ingreso';
+    document.querySelector('#formFinanza .btn-submit').textContent = isGasto ? 'Guardar Gasto' : 'Guardar Ingreso';
+}
+
+function poblarSelectCitas() {
+    const select = document.getElementById('finCitaOrigen');
+    if (!select) return;
+    select.innerHTML = '<option value="">— Escribir manualmente —</option>';
+    citasParaAutocompletar = [];
+
+    if (!calendarInstance) return;
+    const hoy = new Date();
+    const limiteAtras = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - 14);
+    const limiteAdelante = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + 14, 23, 59, 59);
+
+    const citas = calendarInstance.getEvents()
+        .filter(e => e.start && e.start >= limiteAtras && e.start <= limiteAdelante)
+        .sort((a, b) => Math.abs(a.start - hoy) - Math.abs(b.start - hoy));
+
+    citas.forEach(e => {
+        const partes = e.title.split('|');
+        const nombre = partes[1] || partes[0] || '';
+        // Si el paciente ya está registrado, su diagnóstico actual manda sobre el
+        // tratamiento con el que se agendó la cita (que puede haber cambiado tras
+        // evaluarlo en consulta, ej. se agendó "Extracción" y terminó siendo "Blanqueamiento").
+        const pacienteRegistrado = pacientesStore.find(p => p.nombre === nombre);
+        const tratamiento = pacienteRegistrado ? pacienteRegistrado.tratamiento : (partes[0] || '');
+        const fechaISO = fechaLocalISO(e.start);
+        const fechaLegible = e.start.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+
+        const idx = citasParaAutocompletar.length;
+        citasParaAutocompletar.push({ nombre, tratamiento, fecha: fechaISO });
+
+        const opt = document.createElement('option');
+        opt.value = String(idx);
+        opt.textContent = `${nombre} — ${tratamiento} (${fechaLegible})`;
+        select.appendChild(opt);
+    });
+
+    sincronizarTriggerSelect('finCitaOrigen');
+}
+
+function autocompletarDesdeCita() {
+    const select = document.getElementById('finCitaOrigen');
+    if (select.value === '') return;
+    const cita = citasParaAutocompletar[Number(select.value)];
+    if (!cita) return;
+
+    document.getElementById('finNombre').value = cita.nombre;
+    document.getElementById('finTratamiento').value = cita.tratamiento;
+    document.getElementById('finFecha').value = cita.fecha;
+    sincronizarTriggerSelect('finTratamiento');
+}
+
+function abrirModalFinanza() {
+    actualizarTituloFinanza();
+    poblarSelectCitas();
+    toggleFinanzaFields();
+    sincronizarTriggerSelect('finTipo');
+    sincronizarTriggerSelect('finTratamiento');
+    if (editIndexFinanza === -1) {
+        document.getElementById('finFecha').value = fechaLocalISO();
+    }
+    document.getElementById('modalFinanza').style.display = 'flex';
+}
 function cerrarModalFinanza() {
     document.getElementById('modalFinanza').style.display = 'none';
     document.getElementById('formFinanza').reset();
     document.getElementById('finTipo').value = 'ingreso';
-    toggleFinanzaFields();
     editIndexFinanza = -1;
-    document.querySelector('#modalFinanza h3').textContent = 'Agregar Paciente';
-    document.querySelector('#formFinanza .btn-submit').textContent = 'Guardar Paciente';
+    toggleFinanzaFields();
 }
 
 document.getElementById('formPaciente').addEventListener('submit', async function (e) {
@@ -759,6 +1090,10 @@ function renderFinanzasPacientes() {
             <td style="white-space: nowrap;">${p.fecha}</td>
             <td>
                 <div style="display: flex; gap: 8px;">
+                    ${p.deuda > 0 ? `
+                    <button class="btn-icon" onclick="abrirModalAbono(${idx})" title="Registrar pago de deuda" style="color: var(--secondary); background: none; border: none; cursor: pointer; display: flex;">
+                        <svg width="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-2m-6-4h8m0 0l-3-3m3 3l-3 3"></path></svg>
+                    </button>` : ''}
                     <button class="btn-icon" onclick="editarFinanza(${idx})" title="Editar" style="color: var(--dash-accent); background: none; border: none; cursor: pointer; display: flex;">
                         <svg width="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                     </button>
@@ -771,6 +1106,13 @@ function renderFinanzasPacientes() {
         tbody.appendChild(tr);
     });
 
+    if (filteredData.length === 0) {
+        const mensaje = finanzasPacientesStore.length === 0
+            ? 'No hay registros financieros todavía. Usa "Agregar Paciente" para crear el primero.'
+            : 'Sin resultados para tu búsqueda o filtro.';
+        tbody.innerHTML = `<tr class="empty-state-row"><td colspan="8">${mensaje}</td></tr>`;
+    }
+
     actualizarMetricasFinanzas(filteredData);
 }
 
@@ -781,6 +1123,52 @@ async function borrarFinanza(idx) {
     finanzasPacientesStore.splice(idx, 1);
     renderFinanzasPacientes();
 }
+
+function abrirModalAbono(idx) {
+    const p = finanzasPacientesStore[idx];
+    if (!p || p.deuda <= 0) return;
+    abonoIdx = idx;
+
+    document.getElementById('abonoNombrePaciente').textContent = p.nombre;
+    document.getElementById('abonoDeudaActual').textContent = formatSoles(p.deuda).replace('&nbsp;', ' ');
+    document.getElementById('abonoMonto').value = '';
+
+    document.getElementById('modalAbono').style.display = 'flex';
+}
+
+function cerrarModalAbono() {
+    document.getElementById('modalAbono').style.display = 'none';
+    document.getElementById('formAbono').reset();
+    abonoIdx = -1;
+}
+
+document.getElementById('formAbono').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    if (abonoIdx === -1) return;
+
+    const registro = finanzasPacientesStore[abonoIdx];
+    const montoRaw = document.getElementById('abonoMonto').value.trim();
+    const monto = parseFloat(montoRaw.replace(/[^0-9.-]+/g, ''));
+
+    if (isNaN(monto) || monto <= 0) {
+        alert('Ingresa un monto válido.');
+        return;
+    }
+    if (monto > registro.deuda) {
+        alert('El monto no puede ser mayor a la deuda pendiente (' + formatSoles(registro.deuda).replace('&nbsp;', ' ') + ').');
+        return;
+    }
+
+    const nuevoPago = registro.pago + monto;
+    const nuevaDeuda = Math.max(0, registro.precio - nuevoPago);
+    const datosActualizados = { pago: nuevoPago, deuda: nuevaDeuda };
+
+    await updateDoc(doc(finanzasCollection, registro.id), datosActualizados);
+    finanzasPacientesStore[abonoIdx] = Object.assign({}, registro, datosActualizados);
+
+    renderFinanzasPacientes();
+    cerrarModalAbono();
+});
 
 function toggleFinanzaFields() {
     const tipo = document.getElementById('finTipo').value;
@@ -793,6 +1181,13 @@ function toggleFinanzaFields() {
 
     document.getElementById('finTratamiento').required = !isGasto;
     document.getElementById('finPago').required = !isGasto;
+
+    const groupCita = document.getElementById('groupFinCitaOrigen');
+    if (groupCita) {
+        groupCita.style.display = (!isGasto && editIndexFinanza === -1) ? 'block' : 'none';
+    }
+
+    actualizarTituloFinanza();
 }
 
 function editarFinanza(idx) {
@@ -820,6 +1215,11 @@ document.getElementById('formFinanza').addEventListener('submit', async function
     const tratamiento = tipo === 'ingreso' ? document.getElementById('finTratamiento').value.trim() : 'Gasto Clínica';
     const precioRaw = document.getElementById('finPrecio').value.trim();
     const fecha = document.getElementById('finFecha').value;
+
+    if (tipo === 'ingreso' && !tratamiento) {
+        alert('Selecciona un tratamiento.');
+        return;
+    }
 
     const precio = parseFloat(precioRaw.replace(/[^0-9.-]+/g, ''));
     // Si es gasto, el pago es igual al precio (salida de dinero completa)
@@ -905,9 +1305,11 @@ function exportarFinanzasCSV() {
 // Cerrar modales y paneles con la tecla Escape
 document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
+        cerrarTodosLosPaneles();
         cerrarModal();
         cerrarModalPaciente();
         cerrarModalFinanza();
+        cerrarModalAbono();
         cerrarModalVer();
         closePatientProfile();
     }
@@ -924,16 +1326,22 @@ window.abrirModalFinanza = abrirModalFinanza;
 window.resetFinanceFilters = resetFinanceFilters;
 window.sortFinanzas = sortFinanzas;
 window.closePatientProfile = closePatientProfile;
+window.guardarNotaEvolucion = guardarNotaEvolucion;
 window.cerrarModal = cerrarModal;
 window.cerrarModalPaciente = cerrarModalPaciente;
 window.cerrarModalVer = cerrarModalVer;
 window.eliminarCita = eliminarCita;
+window.editarCita = editarCita;
 window.cerrarModalFinanza = cerrarModalFinanza;
 window.openPatientProfile = openPatientProfile;
 window.editarPaciente = editarPaciente;
 window.borrarPaciente = borrarPaciente;
 window.editarFinanza = editarFinanza;
 window.borrarFinanza = borrarFinanza;
+window.abrirModalAbono = abrirModalAbono;
+window.autocompletarDesdeCita = autocompletarDesdeCita;
+window.autocompletarPacienteDesdeOrigen = autocompletarPacienteDesdeOrigen;
+window.cerrarModalAbono = cerrarModalAbono;
 window.renderPacientes = renderPacientes;
 window.renderFinanzasPacientes = renderFinanzasPacientes;
 window.toggleFinanzaFields = toggleFinanzaFields;
