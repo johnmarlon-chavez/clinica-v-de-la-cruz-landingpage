@@ -1323,6 +1323,14 @@ img {
 }
 
 @media (max-width: 1024px) {
+    .nav, .btn-cta {
+        display: none;
+    }
+
+    .menu-toggle {
+        display: block;
+    }
+
     .hero-grid {
         grid-template-columns: 1fr;
         gap: 40px;
@@ -1362,37 +1370,49 @@ img {
 }
 
 @media (max-width: 768px) {
-    .nav, .btn-cta {
-        display: none;
-    }
-    
-    .menu-toggle {
-        display: block;
-    }
-    
     .hero {
         min-height: auto;
         padding: 120px 0 60px;
     }
-    
+
+    .servicios, .nosotros, .porque-elegirnos, .contacto {
+        padding: 70px 0;
+    }
+
     .hero-buttons {
         flex-direction: column;
     }
-    
+
     .hero-stats {
         flex-wrap: wrap;
         gap: 24px;
     }
-    
+
     .hero-image-float {
         display: none;
     }
-    
+
+    .hero-image-main {
+        height: 320px;
+    }
+
     .servicios-grid {
         grid-template-columns: 1fr;
     }
 
     .porque-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .nosotros-image-main {
+        height: 300px;
+    }
+
+    .nosotros-monograma {
+        font-size: 64px;
+    }
+
+    .nosotros-features {
         grid-template-columns: 1fr;
     }
 
@@ -1402,6 +1422,14 @@ img {
 
     .contacto-form {
         padding: 30px 24px;
+    }
+
+    .modal-body {
+        padding: 24px 20px;
+    }
+
+    .modal-title {
+        font-size: 24px;
     }
 
     .footer-grid {
