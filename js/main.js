@@ -142,6 +142,17 @@ function toggleMenu() {
     menu.classList.toggle('active');
 }
 
+const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            revealObserver.unobserve(entry.target);
+        }
+    });
+}, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
+
+document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
 function enviarFormulario(e) {
     e.preventDefault();
     const nombre = document.getElementById('nombre').value;
