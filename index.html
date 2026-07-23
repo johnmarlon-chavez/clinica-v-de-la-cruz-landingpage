@@ -4,13 +4,58 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Clínica Odontológica V de la Cruz | Tu Sonrisa, Nuestra Prioridad</title>
-    <meta name="description" content="Clínica dental profesional. Ortodoncia, Implantes, Endodoncia, Blanqueamiento, Odontopediatría y más. Tu sonrisa, nuestra prioridad.">
-    
+    <meta name="description" content="Clínica dental en Trujillo. Ortodoncia, Implantes, Endodoncia, Blanqueamiento, Odontopediatría y más. Atención personalizada con el Dr. Erick Valverde De la Cruz. Agenda tu cita.">
+    <link rel="canonical" href="https://clinica-v-de-la-cruz-landingpage.vercel.app/">
+
+    <meta property="og:type" content="business.business">
+    <meta property="og:title" content="Clínica Odontológica V de la Cruz | Tu Sonrisa, Nuestra Prioridad">
+    <meta property="og:description" content="Clínica dental en Trujillo. Ortodoncia, Implantes, Endodoncia, Blanqueamiento, Odontopediatría y más. Atención personalizada con el Dr. Erick Valverde De la Cruz.">
+    <meta property="og:image" content="https://images.unsplash.com/photo-1629909613654-28e377c37b09">
+    <meta property="og:url" content="https://clinica-v-de-la-cruz-landingpage.vercel.app/">
+    <meta property="og:locale" content="es_PE">
+    <meta property="og:site_name" content="Clínica Odontológica V de la Cruz">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Clínica Odontológica V de la Cruz | Tu Sonrisa, Nuestra Prioridad">
+    <meta name="twitter:description" content="Clínica dental en Trujillo. Ortodoncia, Implantes, Endodoncia, Blanqueamiento, Odontopediatría y más.">
+    <meta name="twitter:image" content="https://images.unsplash.com/photo-1629909613654-28e377c37b09">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+
     <link rel="stylesheet" href="css/style.css">
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Dentist",
+        "name": "Clínica Odontológica V de la Cruz",
+        "image": "https://images.unsplash.com/photo-1629909613654-28e377c37b09",
+        "url": "https://clinica-v-de-la-cruz-landingpage.vercel.app/",
+        "telephone": "+51979062031",
+        "email": "coevdelacruz@gmail.com",
+        "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "Av. Prol. César Vallejo 2670",
+            "addressLocality": "Víctor Larco Herrera",
+            "addressRegion": "La Libertad",
+            "addressCountry": "PE"
+        },
+        "openingHoursSpecification": {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
+            "opens": "09:00",
+            "closes": "19:00"
+        },
+        "medicalSpecialty": "Dentistry",
+        "availableService": [
+            "Ortodoncia", "Implantes Dentales", "Endodoncia", "Extracción Dental",
+            "Limpieza Dental", "Blanqueamiento Dental", "Carillas Dentales",
+            "Odontopediatría", "Resinas Dentales", "Coronas Dentales"
+        ]
+    }
+    </script>
 </head>
 <body>
     
@@ -29,9 +74,7 @@
             <nav class="nav">
                 <a href="#inicio">Inicio</a>
                 <a href="#servicios">Servicios</a>
-                <a href="#galeria">Galería</a>
-                <a href="#clinica">Nuestra Clínica</a>
-                <a href="#testimonios">Testimonios</a>
+                <a href="#porque-elegirnos">¿Por Qué Elegirnos?</a>
                 <a href="#nosotros">Nosotros</a>
                 <a href="#contacto">Contacto</a>
             </nav>
@@ -50,8 +93,7 @@
     <div class="mobile-menu" id="mobileMenu">
         <a href="#inicio" onclick="toggleMenu()">Inicio</a>
         <a href="#servicios" onclick="toggleMenu()">Servicios</a>
-        <a href="#galeria" onclick="toggleMenu()">Galería</a>
-        <a href="#clinica" onclick="toggleMenu()">Nuestra Clínica</a>
+        <a href="#porque-elegirnos" onclick="toggleMenu()">¿Por Qué Elegirnos?</a>
         <a href="#nosotros" onclick="toggleMenu()">Nosotros</a>
         <a href="#contacto" onclick="toggleMenu()">Contacto</a>
         <a href="https://wa.me/51979062031" onclick="toggleMenu()">📱 WhatsApp</a>
@@ -65,9 +107,9 @@
             <div class="hero-grid">
                 <div class="hero-content">
                     <h1>Tu sonrisa,<br><span>nuestra prioridad</span></h1>
-                    
-                    <p>Más de 15 años cuidando la salud dental de tu familia. Tecnología de vanguardia y atención personalizada para que cada visita sea una experiencia cómoda y sin estrés.</p>
-                    
+
+                    <p>Cuidamos la salud dental de tu familia con tecnología de vanguardia y atención personalizada, para que cada visita sea una experiencia cómoda y sin estrés.</p>
+
                     <div class="hero-buttons">
                         <a href="#contacto" class="btn-primary">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:20px;height:20px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
@@ -75,26 +117,26 @@
                         </a>
                         <a href="#servicios" class="btn-secondary">Ver Tratamientos</a>
                     </div>
-                    
+
                     <div class="hero-stats">
                         <div class="stat-item">
-                            <div class="stat-number">+15</div>
-                            <div class="stat-label">Años de experiencia</div>
+                            <div class="stat-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg></div>
+                            <div class="stat-label">Atención Personalizada</div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-number">+8,000</div>
-                            <div class="stat-label">Pacientes atendidos</div>
+                            <div class="stat-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></div>
+                            <div class="stat-label">Tecnología Moderna</div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-number">4.9★</div>
-                            <div class="stat-label">Rating en Google</div>
+                            <div class="stat-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 9.75c0 1.5 1.5 3 2.25 3s2.25-1.5 2.25-3M12 3C7 3 3 7 3 12s4 9 9 9 9-4 9-9-4-9-9-9z"/></svg></div>
+                            <div class="stat-label">Ambiente Cómodo</div>
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="hero-image">
-                    <img src="https://scontent.flim37-1.fna.fbcdn.net/v/t1.6435-9/144320506_949563635447553_1348469449491296360_n.jpg?_nc_cat=109&ccb=1-7&_nc_sid=06a7ca&_nc_ohc=CxWPJRjHReIQ7kNvwEMWFbo&_nc_oc=AdoYkS-y8Tp4XEu9l-4YJN4FFwf-V_EsAmnthnYC4GIlZWaBh2g_qWqC_NVDVx5f5oApvp7Jjwm3aSsc-7wsxCCE&_nc_zt=23&_nc_ht=scontent.flim37-1.fna&_nc_gid=wn592lTgrIawV7Wnul33mw&_nc_ss=7a3a8&oh=00_Af2_XK9FxDnWm7JYSRjuMPN51RnoBeAXNJLtSq4x7m4wgA&oe=6A04F13B" 
-                         alt="Clínica Dental V de la Cruz" 
+                    <img src="https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=900&q=80"
+                         alt="Consultorio dental moderno"
                          class="hero-image-main">
                 </div>
             </div>
@@ -112,79 +154,79 @@
             <div class="servicios-grid">
                 <div class="servicio-card" onclick="openModal('ortodoncia')">
                     <span class="servicio-number">01</span>
-                    <img src="https://i.pinimg.com/736x/a0/a2/61/a0a2615eac7c8169a8f9ef0ff462a6ca.jpg" alt="Ortodoncia">
+                    <div class="servicio-icon" style="background:#8b5cf6;"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
                     <h3 class="servicio-title">Ortodoncia</h3>
                     <p class="servicio-desc">Brackets metálicos, cerámica o alineadores invisibles para corregir tu sonrisa.</p>
                     <a href="#" class="servicio-link" onclick="event.preventDefault(); event.stopPropagation(); openModal('ortodoncia')">Saber más</a>
                 </div>
-                
+
                 <div class="servicio-card" onclick="openModal('implantes')">
                     <span class="servicio-number">02</span>
-                    <img src="https://i.pinimg.com/1200x/b1/b6/43/b1b643a4d70627e2ac2c78720ba75c30.jpg" alt="Implantes">
+                    <div class="servicio-icon" style="background:#06b6d4;"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></div>
                     <h3 class="servicio-title">Implantes</h3>
                     <p class="servicio-desc">Reemplazo dental fijo con titanio de grado médico para recuperar tu sonrisa.</p>
                     <a href="#" class="servicio-link" onclick="event.preventDefault(); event.stopPropagation(); openModal('implantes')">Saber más</a>
                 </div>
-                
+
                 <div class="servicio-card" onclick="openModal('endodoncia')">
                     <span class="servicio-number">03</span>
-                    <img src="https://i.pinimg.com/736x/9e/21/ff/9e21ff1a058b60cb50bfd966f231a585.jpg" alt="Endodoncia">
+                    <div class="servicio-icon" style="background:#6366f1;"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
                     <h3 class="servicio-title">Endodoncia</h3>
                     <p class="servicio-desc">Tratamiento de conductos para salvar piezas dentales dañadas.</p>
                     <a href="#" class="servicio-link" onclick="event.preventDefault(); event.stopPropagation(); openModal('endodoncia')">Saber más</a>
                 </div>
-                
+
                 <div class="servicio-card" onclick="openModal('extraccion')">
                     <span class="servicio-number">04</span>
-                    <img src="https://i.pinimg.com/736x/72/42/33/724233ec59310430b7860771ab7dccc0.jpg" alt="Extracción">
+                    <div class="servicio-icon" style="background:#f43f5e;"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
                     <h3 class="servicio-title">Extracción Dental</h3>
                     <p class="servicio-desc">Extracción simple o quirúrgica de piezas dentales con cuidado.</p>
                     <a href="#" class="servicio-link" onclick="event.preventDefault(); event.stopPropagation(); openModal('extraccion')">Saber más</a>
                 </div>
-                
+
                 <div class="servicio-card" onclick="openModal('limpieza')">
                     <span class="servicio-number">05</span>
-                    <img src="https://i.pinimg.com/736x/ad/03/c2/ad03c2a8ec80bec00ad4c715348de6f1.jpg" alt="Limpieza">
+                    <div class="servicio-icon" style="background:#10b981;"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"/></svg></div>
                     <h3 class="servicio-title">Limpieza Dental</h3>
                     <p class="servicio-desc">Profilaxis profesional con ultrasonido para dientes saludables.</p>
                     <a href="#" class="servicio-link" onclick="event.preventDefault(); event.stopPropagation(); openModal('limpieza')">Saber más</a>
                 </div>
-                
+
                 <div class="servicio-card" onclick="openModal('blanqueamiento')">
                     <span class="servicio-number">06</span>
-                    <img src="https://i.pinimg.com/736x/9e/9f/dd/9e9fdd14eb0f1c05ca6489f0711441aa.jpg" alt="Blanqueamiento">
+                    <div class="servicio-icon" style="background:#f59e0b;"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/></svg></div>
                     <h3 class="servicio-title">Blanqueamiento</h3>
                     <p class="servicio-desc">Procedimiento LED o láser para dientes más blancos y brillantes.</p>
                     <a href="#" class="servicio-link" onclick="event.preventDefault(); event.stopPropagation(); openModal('blanqueamiento')">Saber más</a>
                 </div>
-                
+
                 <div class="servicio-card" onclick="openModal('carillas')">
                     <span class="servicio-number">07</span>
-                    <img src="https://i.pinimg.com/736x/85/98/15/8598158be6a9b74d8cd68a152a02be44.jpg" alt="Carillas">
+                    <div class="servicio-icon" style="background:#ec4899;"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
                     <h3 class="servicio-title">Carillas</h3>
                     <p class="servicio-desc">De porcelana o composite para transformar tu sonrisa.</p>
                     <a href="#" class="servicio-link" onclick="event.preventDefault(); event.stopPropagation(); openModal('carillas')">Saber más</a>
                 </div>
-                
+
                 <div class="servicio-card" onclick="openModal('odontopediatria')">
                     <span class="servicio-number">08</span>
-                    <img src="https://i.pinimg.com/1200x/18/88/26/1888265f7201ab4e40ff877fd0db2d66.jpg" alt="Odontopediatría">
+                    <div class="servicio-icon" style="background:#f97316;"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg></div>
                     <h3 class="servicio-title">Odontopediatría</h3>
                     <p class="servicio-desc">Cuidado dental infantil especializado en un ambiente amigable.</p>
                     <a href="#" class="servicio-link" onclick="event.preventDefault(); event.stopPropagation(); openModal('odontopediatria')">Saber más</a>
                 </div>
-                
+
                 <div class="servicio-card" onclick="openModal('resinas')">
                     <span class="servicio-number">09</span>
-                    <img src="https://i.pinimg.com/1200x/fc/fe/27/fcfe276bf9fd1af918f70f98642c0000.jpg" alt="Resinas">
+                    <div class="servicio-icon" style="background:#14b8a6;"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"/></svg></div>
                     <h3 class="servicio-title">Resinas</h3>
                     <p class="servicio-desc">Obturaciones estéticas del color del diente.</p>
                     <a href="#" class="servicio-link" onclick="event.preventDefault(); event.stopPropagation(); openModal('resinas')">Saber más</a>
                 </div>
-                
+
                 <div class="servicio-card" onclick="openModal('coronas')">
                     <span class="servicio-number">10</span>
-                    <img src="https://i.pinimg.com/1200x/4c/79/a4/4c79a4eafadc7092c31ec1c4071e8c3f.jpg" alt="Coronas">
+                    <div class="servicio-icon" style="background:var(--gold);"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></div>
                     <h3 class="servicio-title">Coronas</h3>
                     <p class="servicio-desc">De zirconia, porcelana o metal-cerámica para restaurar dientes.</p>
                     <a href="#" class="servicio-link" onclick="event.preventDefault(); event.stopPropagation(); openModal('coronas')">Saber más</a>
@@ -193,138 +235,35 @@
         </div>
     </section>
 
-    <section class="galeria" id="galeria">
+
+    <section class="porque-elegirnos" id="porque-elegirnos">
         <div class="container">
             <div class="section-header">
-                <span class="tag">Resultados Reales</span>
-                <h2 class="section-title">Antes y Después</h2>
-                <p class="section-subtitle">Transformaciones reales de nuestros pacientes. Desliza para comparar el antes y después de cada tratamiento.</p>
+                <span class="tag">Nuestro Compromiso</span>
+                <h2 class="section-title">¿Por Qué Elegirnos?</h2>
+                <p class="section-subtitle">Estos son los principios que guían cada tratamiento en nuestro consultorio.</p>
             </div>
-            
-            <div class="galeria-grid">
-                <div class="galeria-item">
-                    <div class="galeria-before-after">
-                        <img src="https://i.pinimg.com/736x/15/7d/74/157d7480e696e9229ee643fecf81a2d9.jpg" alt="Antes" class="galeria-img galeria-img-before">
-                        <img src="https://i.pinimg.com/1200x/8f/e4/c1/8fe4c16f38047c4651e02f413c7234bf.jpg" alt="Después" class="galeria-img galeria-img-after">
-                        <div class="galeria-slider"></div>
-                        <div class="galeria-labels">
-                            <span class="galeria-label">Antes</span>
-                            <span class="galeria-label">Después</span>
-                        </div>
-                    </div>
-                    <div class="galeria-info">
-                        <h3 class="galeria-title">Blanqueamiento Dental</h3>
-                        <p class="galeria-desc">Paciente alcanzó 8 tonos más blanco en una sesión</p>
-                    </div>
-                </div>
 
-                <div class="galeria-item">
-                    <div class="galeria-before-after">
-                        <img src="https://i.pinimg.com/736x/22/f3/a7/22f3a7c0134d2ef49244b86329e7b537.jpg" alt="Antes" class="galeria-img galeria-img-before">
-                        <img src="https://i.pinimg.com/736x/05/26/df/0526df5e0f9e6515225200443a7a83e7.jpg" alt="Después" class="galeria-img galeria-img-after">
-                        <div class="galeria-slider"></div>
-                        <div class="galeria-labels">
-                            <span class="galeria-label">Antes</span>
-                            <span class="galeria-label">Después</span>
-                        </div>
-                    </div>
-                    <div class="galeria-info">
-                        <h3 class="galeria-title">Ortodoncia</h3>
-                        <p class="galeria-desc">Corrección de apiñamiento en 18 meses de tratamiento</p>
-                    </div>
+            <div class="porque-grid">
+                <div class="porque-card">
+                    <div class="porque-icon"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg></div>
+                    <h3 class="porque-title">Atención Personalizada</h3>
+                    <p class="porque-desc">Cada plan de tratamiento se adapta a las necesidades específicas de cada paciente.</p>
                 </div>
-
-                <div class="galeria-item">
-                    <div class="galeria-before-after">
-                        <img src="https://i.pinimg.com/1200x/8f/e4/c1/8fe4c16f38047c4651e02f413c7234bf.jpg" alt="Antes" class="galeria-img galeria-img-before">
-                        <img src="https://i.pinimg.com/736x/15/7d/74/157d7480e696e9229ee643fecf81a2d9.jpg" alt="Después" class="galeria-img galeria-img-after">
-                        <div class="galeria-slider"></div>
-                        <div class="galeria-labels">
-                            <span class="galeria-label">Antes</span>
-                            <span class="galeria-label">Después</span>
-                        </div>
-                    </div>
-                    <div class="galeria-info">
-                        <h3 class="galeria-title">Carillas de Porcelana</h3>
-                        <p class="galeria-desc">Sonrisa renovada con 8 carillas superiores</p>
-                    </div>
+                <div class="porque-card">
+                    <div class="porque-icon"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></div>
+                    <h3 class="porque-title">Tecnología Moderna</h3>
+                    <p class="porque-desc">Equipos e instrumental actualizado para diagnósticos precisos y tratamientos más cómodos.</p>
                 </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="testimonios" id="testimonios">
-        <div class="container">
-            <div class="section-header">
-                <span class="tag">Lo que dicen nuestros pacientes</span>
-                <h2 class="section-title">Testimonios</h2>
-                <p class="section-subtitle">Miles de pacientes confiaron en nosotros para transformar su sonrisa.</p>
-            </div>
-            
-            <div class="testimonios-grid">
-                <div class="testimonio-card">
-                    <span class="testimonio-quote">"</span>
-                    <p class="testimonio-text">Excelente atención. El Dr. Erick es muy profesional y me explico todo detalladamente. Mi tratamiento de ortodoncia fue un éxito y ahora tengo la sonrisa que siempre quise.</p>
-                    <div class="testimonio-author">
-<img src="images/testimonios/testimonio2.jpg" alt="María" class="testimonio-avatar-img">
-                         <div class="testimonio-info">
-                             <div class="testimonio-name">María Rodríguez</div>
-                             <div class="testimonio-rating">★★★★★ <span>Ortodoncia</span></div>
-                         </div>
-                     </div>
-                 </div>
-                 
-                 <div class="testimonio-card">
-                     <span class="testimonio-quote">"</span>
-                     <p class="testimonio-text">Me sentía muy nervioso pero el doctor me hizo sentir muy cómodo. El blanqueamiento fue rápido y sin dolor. Mis dientes quedaron perfectos.</p>
-                     <div class="testimonio-author">
-                         <img src="images/testimonios/testimonio1.jpg" alt="Juan" class="testimonio-avatar-img">
-                        <div class="testimonio-info">
-                            <div class="testimonio-name">Juan Carlos</div>
-                            <div class="testimonio-rating">★★★★★ <span>Blanqueamiento</span></div>
-                        </div>
-                    </div>
+                <div class="porque-card">
+                    <div class="porque-icon"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9.75c0 1.5 1.5 3 2.25 3s2.25-1.5 2.25-3M12 3C7 3 3 7 3 12s4 9 9 9 9-4 9-9-4-9-9-9z"/></svg></div>
+                    <h3 class="porque-title">Ambiente Cómodo</h3>
+                    <p class="porque-desc">Un consultorio pensado para que cada visita sea tranquila, sin estrés ni ansiedad.</p>
                 </div>
-                
-                <div class="testimonio-card">
-                    <span class="testimonio-quote">"</span>
-                    <p class="testimonio-text">Llevé a mi hijo de 8 años y el atendimento fue increíble. Muy pacientes con los niños. Mi hijo ya no le tiene miedo al dentista.</p>
-                    <div class="testimonio-author">
-                        <img src="images/testimonios/testimonio3.jpg" alt="Lucía" class="testimonio-avatar-img">
-                        <div class="testimonio-info">
-                            <div class="testimonio-name">Max Zambrano</div>
-                            <div class="testimonio-rating">★★★★★ <span>Odontopediatría</span></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="nuestra-clinica" id="clinica">
-        <div class="container">
-            <div class="section-header">
-                <span class="tag">Nuestro Espacio</span>
-                <h2 class="section-title">Nuestra Clínica</h2>
-                <p class="section-subtitle">Conoce nuestras instalaciones modernas diseñadas para tu comfort y bienestar.</p>
-            </div>
-            
-            <div class="nuestra-clinica-grid">
-                <div class="nuestra-clinica-item">
-                    <img src="https://i.pinimg.com/736x/91/ca/d1/91cad141aa6e77434490f5b51974c41b.jpg" alt="Recepción">
-                    <div class="nuestra-clinica-overlay">Recepción</div>
-                </div>
-                <div class="nuestra-clinica-item">
-                    <img src="https://i.pinimg.com/736x/d2/78/b1/d278b18b45da72b8fdce952c2bbd04a9.jpg" alt="Consultorio">
-                    <div class="nuestra-clinica-overlay">Consultorio</div>
-                </div>
-                <div class="nuestra-clinica-item">
-                    <img src="https://i.pinimg.com/736x/f2/d3/c4/f2d3c4f86e5e36173943208d71cdbc69.jpg" alt="Equipamiento">
-                    <div class="nuestra-clinica-overlay">Equipamiento de última generación</div>
-                </div>
-                <div class="nuestra-clinica-item">
-                    <img src="https://i.pinimg.com/1200x/ce/cf/13/cecf135b61f438bf371d3593ed39724e.jpg" alt="Sala de espera">
-                    <div class="nuestra-clinica-overlay">Sala de espera</div>
+                <div class="porque-card">
+                    <div class="porque-icon"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+                    <h3 class="porque-title">Seguimiento Post-Tratamiento</h3>
+                    <p class="porque-desc">Acompañamos tu recuperación y evolución después de cada procedimiento.</p>
                 </div>
             </div>
         </div>
@@ -334,25 +273,21 @@
         <div class="container">
             <div class="nosotros-grid">
                 <div class="nosotros-image">
-                    <img src="https://scontent.flim37-1.fna.fbcdn.net/v/t1.6435-9/142986983_949563632114220_7196848475890959936_n.jpg?_nc_cat=109&ccb=1-7&_nc_sid=06a7ca&_nc_ohc=WeeubhoC5boQ7kNvwEWaPbg&_nc_oc=Adof68SRENm9eb-FU41EdtjzQc__gQw_8EOIiw8miTX44QUdmNtecpZmg2Ki7fxi8kTGtIMJtGQfXTIGv9i4YLKZ&_nc_zt=23&_nc_ht=scontent.flim37-1.fna&_nc_gid=aA4gqcR2226B-XqQafHx_Q&_nc_ss=7a3a8&oh=00_Af2FQmczVLLYb2gIT4DBcacgEIj_nOsaUirBHrfuUJSyrA&oe=6A04F413" 
-                         alt="Dr. Erick Valverde De la Cruz" 
-                         class="nosotros-image-main">
-                    <div class="nosotros-image-accent"></div>
-                    <div class="nosotros-badge">
-                        <div class="nosotros-badge-number">+15</div>
-                        <div class="nosotros-badge-text">Años de<br>trayectoria</div>
+                    <div class="nosotros-image-main nosotros-placeholder">
+                        <span class="nosotros-monograma">EVC</span>
                     </div>
+                    <div class="nosotros-image-accent"></div>
                 </div>
-                
+
                 <div class="nosotros-content">
                     <span class="tag">Sobre Nosotros</span>
                     <h2>Dr. Erick Valverde De la Cruz</h2>
-                    <p>Desde 2010, la Clínica Odontológica V de la Cruz ha sido referente en atención dental de calidad en la ciudad de Trujillo. Con más de 15 años de experiencia, brindo atención odontológica personalizada en un ambiente cálido y moderno, utilizando tecnología de última generación para garantizar los mejores resultados en cada tratamiento.</p>
-                    
+                    <p>En la Clínica Odontológica V de la Cruz brindo atención odontológica personalizada en un ambiente cálido y moderno, utilizando tecnología de última generación para garantizar los mejores resultados en cada tratamiento.</p>
+
                     <div class="nosotros-features">
                         <div class="feature-item">
                             <div class="feature-check"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>
-                            <span>Más de 15 años de experiencia</span>
+                            <span>Atención personalizada</span>
                         </div>
                         <div class="feature-item">
                             <div class="feature-check"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>
@@ -360,11 +295,11 @@
                         </div>
                         <div class="feature-item">
                             <div class="feature-check"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>
-                            <span>Atención personalizada</span>
+                            <span>Ambiente cálido y moderno</span>
                         </div>
                         <div class="feature-item">
                             <div class="feature-check"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div>
-                            <span>Instalaciones modernas</span>
+                            <span>Seguimiento post-tratamiento</span>
                         </div>
                     </div>
                     
@@ -466,11 +401,28 @@
             <button class="modal-close" onclick="closeModal()">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
-            <img src="" alt="" class="modal-image" id="modal-image">
+            <div class="modal-image" id="modal-image">
+                <svg id="modal-icon" fill="none" stroke="white" stroke-width="1.5" viewBox="0 0 24 24" style="width:64px;height:64px;"></svg>
+            </div>
             <div class="modal-body">
                 <h2 class="modal-title" id="modal-title"></h2>
                 <p class="modal-desc" id="modal-desc"></p>
-                
+
+                <div class="modal-info">
+                    <div class="modal-info-item">
+                        <div class="modal-info-icon"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+                        <div class="modal-info-text"><div class="modal-info-label">Duración estimada</div><div class="modal-info-value" id="modal-duracion"></div></div>
+                    </div>
+                    <div class="modal-info-item">
+                        <div class="modal-info-icon"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div>
+                        <div class="modal-info-text"><div class="modal-info-label">Sesiones</div><div class="modal-info-value" id="modal-sesiones"></div></div>
+                    </div>
+                    <div class="modal-info-item">
+                        <div class="modal-info-icon"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+                        <div class="modal-info-text"><div class="modal-info-label">Cuidados</div><div class="modal-info-value" id="modal-cuidado"></div></div>
+                    </div>
+                </div>
+
                 <a href="#contacto" class="btn-primary" style="display: inline-flex; margin-top: 20px;" onclick="closeModal()">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:20px;height:20px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                     Agenda tu cita
@@ -504,9 +456,7 @@
                     <div class="footer-links">
                         <a href="#inicio">Inicio</a>
                         <a href="#servicios">Servicios</a>
-                        <a href="#galeria">Galería</a>
-                        <a href="#clinica">Nuestra Clínica</a>
-                        <a href="#testimonios">Testimonios</a>
+                        <a href="#porque-elegirnos">¿Por Qué Elegirnos?</a>
                         <a href="#nosotros">Nosotros</a>
                         <a href="#contacto">Contacto</a>
                     </div>
@@ -543,7 +493,7 @@
             </div>
             
             <div class="footer-bottom">
-                <p class="footer-copyright">© 2024 Clínica Odontológica V de la Cruz. Todos los derechos reservados.</p>
+                <p class="footer-copyright">© 2026 Clínica Odontológica V de la Cruz. Todos los derechos reservados.</p>
                 <div class="footer-legal">
                     <a href="#">Aviso de Privacidad</a>
                     <a href="#">Términos y Condiciones</a>
