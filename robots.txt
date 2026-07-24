@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://clinica-v-de-la-cruz-landingpage.vercel.app/sitemap.xml
